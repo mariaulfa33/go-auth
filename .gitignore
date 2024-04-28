@@ -22,3 +22,6 @@ go.work
 
 #repo-build
 go-auth
+
+.env
+

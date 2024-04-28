@@ -20,3 +20,14 @@ Source code of the project with clear documentation and comments
 A readme file with instructions on how to set up and run the project, including necessary dependencies and tools.
 
 Unit tests for each function with 85% coverage and Any other necessary documentation or notes to help run or maintain the project
+
+
+================================================================================
+
+## Migration
+- go install github.com/pressly/goose/v3/cmd/goose@latest
+- goose postgres "DATABASE STRING CONNECTION" up
+
+
+================================================================================
+
