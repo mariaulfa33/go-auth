@@ -71,6 +71,7 @@ func (u *UserResponse) Render(w http.ResponseWriter, r *http.Request) error {
 
 func UserResponseData(user *repository.UserResponse) render.Renderer {
 	resp := UserResponse{user}
+	fmt.Println(resp, "users")
 
 	return &resp
 }
@@ -87,15 +88,16 @@ func hashPassword(password string) string {
 
 func userListResponse(users []repository.UserResponse) []render.Renderer {
 	list := []render.Renderer{}
+
+	//@TODO: Refactor this after learning more about pointer
 	for _, user := range users {
-		list = append(list, getAllUserResponse(user)) // error
+		list = append(list, UserResponseData(&repository.UserResponse{
+			Id:    user.Id,
+			Email: user.Email,
+		}))
 	}
+
 	return list
-}
-
-func getAllUserResponse(user *repository.UserResponse) UserResponse {
-	return &UserResponse{User: user} // error
-
 }
 
 func (u Users) Register(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +112,12 @@ func (u Users) Register(w http.ResponseWriter, r *http.Request) {
 		PasswordHash: hashPassword(*data.Password),
 	}
 
+	existingUser, _ := u.UserService.GetUserByEmail(userRequest.Email)
+
+	if existingUser != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("user already exist")))
+		return
+	}
 	user, err := u.UserService.CreateNewUser(userRequest)
 
 	if err != nil {
@@ -179,6 +187,13 @@ func (u Users) AddUser(w http.ResponseWriter, r *http.Request) {
 	userRequest := repository.CreateUser{
 		Email:        strings.ToLower(*data.Email),
 		PasswordHash: hashPassword(*data.Password),
+	}
+
+	existingUser, _ := u.UserService.GetUserByEmail(userRequest.Email)
+
+	if existingUser != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("user already exist")))
+		return
 	}
 
 	user, err := u.UserService.CreateNewUser(userRequest)
