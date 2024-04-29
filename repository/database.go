@@ -13,7 +13,6 @@ func ReadEnv(key string) string {
 }
 
 func Open(config PostgresConfig) (*sql.DB, error) {
-	fmt.Println(config)
 
 	db, err := sql.Open("pgx", config.String())
 	if err != nil {

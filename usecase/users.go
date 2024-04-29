@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/mariaulfa33/go-auth/repository"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -26,6 +29,17 @@ type UserResponse struct {
 	User *repository.UserResponse `json:"user"`
 }
 
+type UserLoginResponse struct {
+	Id    string `json:"id"`
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
+
+// Render implements render.Renderer.
+func (u *UserLoginResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
 type ErrResponse struct {
 	Err            error `json:"-"`
 	HTTPStatusCode int   `json:"-"`
@@ -34,6 +48,8 @@ type ErrResponse struct {
 	AppCode    int64  `json:"code,omitempty"`
 	ErrorText  string `json:"error,omitempty"`
 }
+
+var Secret = []byte(os.Getenv("JWT_SECRET"))
 
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	render.Status(r, e.HTTPStatusCode)
@@ -71,7 +87,16 @@ func (u *UserResponse) Render(w http.ResponseWriter, r *http.Request) error {
 
 func UserResponseData(user *repository.UserResponse) render.Renderer {
 	resp := UserResponse{user}
-	fmt.Println(resp, "users")
+
+	return &resp
+}
+
+func UserResponseDataWithToken(user UserLoginResponse) render.Renderer {
+	resp := UserLoginResponse{
+		Id:    user.Id,
+		Email: user.Email,
+		Token: user.Token,
+	}
 
 	return &resp
 }
@@ -132,6 +157,21 @@ func (u Users) Register(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
+func createJWTToken(id string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"id":  id,
+			"exp": time.Now().Add(time.Hour * 24).Unix(),
+		})
+
+	tokenString, err := token.SignedString(Secret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
 func (u Users) Login(w http.ResponseWriter, r *http.Request) {
 	data := &UserAuthRequest{}
 	if err := render.Bind(r, data); err != nil {
@@ -157,10 +197,17 @@ func (u Users) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := createJWTToken(user.Id)
+	if err != nil {
+		return
+	}
+	fmt.Println(token)
+
 	render.Status(r, http.StatusCreated)
-	render.Render(w, r, UserResponseData(&repository.UserResponse{
+	render.Render(w, r, UserResponseDataWithToken(UserLoginResponse{
 		Id:    user.Id,
 		Email: user.Email,
+		Token: token,
 	}))
 }
 
@@ -172,7 +219,6 @@ func (u Users) GetAllUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(users, "users")
 	render.Status(r, http.StatusOK)
 	render.RenderList(w, r, userListResponse(users))
 }
