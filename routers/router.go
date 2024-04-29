@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -23,7 +22,7 @@ func MainRouter(userController usecase.Users) http.Handler {
 	r.Route("/users", func(r chi.Router) {
 		r.Use(authenticationHandler)
 		r.Get("/", userController.GetAllUser)
-		r.Post("/", userController.AddUser)
+		r.Post("/", userController.Register)
 		r.Delete("/{userID}", userController.RemoveUserById)
 	})
 	return r
@@ -42,31 +41,32 @@ func GetUserSession(ctx context.Context) (string, bool) {
 	return tokenStr, ok
 }
 
-type JwtValueClaims struct {
-	id  string
-	exp int64
-	jwt.RegisteredClaims
-}
+// type JwtValueClaims struct {
+// 	id  string
+// 	exp int64
+// 	jwt.RegisteredClaims
+// }
 
 func authenticationHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		fmt.Println("kepanggil")
 		token := r.Header.Get("Authorization")
 		splitToken := strings.Split(token, "Bearer ")
 		token = splitToken[1]
 
-		jwtTokenParsed, err := jwt.ParseWithClaims(token, &JwtValueClaims{}, func(token *jwt.Token) (interface{}, error) {
+		jwtTokenParsed, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(usecase.Secret), nil
 		})
 
 		if err != nil {
-			render.Render(w, r, usecase.ErrInvalidRequest(errors.New("unauthorized")))
+			render.Render(w, r, usecase.ErrInvalidRequest(err))
 			return
 		}
 
-		claims := jwtTokenParsed.Claims.(*JwtValueClaims)
-		fmt.Println(claims.exp)
-		ctx := setUserSession(r.Context(), claims.id)
+		claims := jwtTokenParsed.Claims.(*jwt.RegisteredClaims)
+
+		ctx := setUserSession(r.Context(), claims.Issuer)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
