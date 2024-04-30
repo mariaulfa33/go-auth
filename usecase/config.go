@@ -1,16 +1,18 @@
 package usecase
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/joho/godotenv"
 )
 
-func LoadEnv() {
+func LoadEnv(envPath string) error {
 	// load .env file
-	err := godotenv.Load(".env")
+	err := godotenv.Load(envPath)
 
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		fmt.Println(err)
+		return err
 	}
+	return nil
 }

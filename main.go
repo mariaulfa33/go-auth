@@ -13,7 +13,7 @@ import (
 
 func main() {
 	//load env file
-	usecase.LoadEnv()
+	usecase.LoadEnv(".env")
 
 	// Setup the database
 	db, err := repository.Open(repository.ReadPostgresConfig())

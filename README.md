@@ -31,3 +31,19 @@ Unit tests for each function with 85% coverage and Any other necessary documenta
 
 ================================================================================
 
+## UNIT TEST
+
+1. Create `.env.test` file
+2. run `go test ./... -v`
+
+
+================================================================================
+
+## DEVELOPMENT
+
+### Require
+- Postgres Database Connection
+- All Package in go.mod
+- Do the Migration
+- run `go run *.go `
+
