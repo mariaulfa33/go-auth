@@ -21,29 +21,27 @@ A readme file with instructions on how to set up and run the project, including 
 
 Unit tests for each function with 85% coverage and Any other necessary documentation or notes to help run or maintain the project
 
-
-================================================================================
+# Outcomes
 
 ## Migration
 - go install github.com/pressly/goose/v3/cmd/goose@latest
 - goose postgres "DATABASE STRING CONNECTION" up
 
 
-================================================================================
-
 ## UNIT TEST
 
 1. Create `.env.test` file
-2. run `go test ./... -v`
+2. run `go test ./... -v --cover `
 
-
-================================================================================
 
 ## DEVELOPMENT
 
 ### Require
 - Postgres Database Connection
-- All Package in go.mod
+- All Requirement in go.mod
+
+### Step
+- Copy and create .env file from .env.template
 - Do the Migration
-- run `go run *.go `
+- run `go run *.go`
 

@@ -2,7 +2,7 @@ package router
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -50,9 +50,17 @@ func GetUserSession(ctx context.Context) (string, bool) {
 func authenticationHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		fmt.Println("kepanggil")
 		token := r.Header.Get("Authorization")
+		if token == "" {
+			render.Render(w, r, usecase.ErrInvalidRequest(errors.New("user unauthorized")))
+			return
+		}
 		splitToken := strings.Split(token, "Bearer ")
+
+		if len(splitToken) == 1 {
+			render.Render(w, r, usecase.ErrInvalidRequest(errors.New("user unauthorized")))
+			return
+		}
 		token = splitToken[1]
 
 		jwtTokenParsed, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
